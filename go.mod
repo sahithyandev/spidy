@@ -1,4 +1,4 @@
-module spidyy
+module spidy
 
 go 1.23.6
 
