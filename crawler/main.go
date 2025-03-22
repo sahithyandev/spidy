@@ -28,13 +28,20 @@ func Crawl(db *sql.DB) {
 		}
 	}
 
+	var disallowedUrls []string
 	if err != nil || time.Since(domain.AddedAt) > 7*24*time.Hour {
 		fmt.Printf("Updating robots.txt for %s\n", hostname)
-		disallowedUrls := FetchAndParseRobotsTxt(hostname)
+		disallowedUrls = FetchAndParseRobotsTxt(hostname)
 		models.RemoveDisallowList(db, hostname)
 		for _, disallowedUrl := range disallowedUrls {
 			models.AddDisallowListEntry(db, hostname, disallowedUrl)
 		}
+	} else {
+		disallowedUrls = models.GetDisallowList(db, hostname)
+	}
+
+	if !IsUrlAllowed(urlToCrawl, disallowedUrls) {
+		return
 	}
 
 	models.RemoveToCrawlEntry(db, urlToCrawl)

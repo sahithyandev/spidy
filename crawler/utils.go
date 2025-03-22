@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -57,4 +58,32 @@ func FetchAndParseRobotsTxt(hostname string) []string {
 	body, err := ResponseToString(response)
 	disallowedList := ParseRobotsTxt(body, "Spidy")
 	return disallowedList
+}
+
+func IsUrlAllowed(targetUrl string, disallowedUrlPatterns []string) bool {
+	if len(disallowedUrlPatterns) == 0 {
+		return true
+	}
+	u, err := url.Parse(targetUrl)
+	if err != nil {
+		panic(err)
+	}
+	for _, pattern := range disallowedUrlPatterns {
+		if strings.HasPrefix(u.Path, pattern) {
+			return false
+		}
+		if strings.HasSuffix(pattern, "$") {
+			frontPartMatches := strings.HasPrefix(u.Path, pattern[:len(pattern)-1])
+			if frontPartMatches && len(u.Path) == len(pattern)-1 {
+				return false
+			}
+		}
+		if strings.Contains(pattern, "*") {
+			patternParts := strings.Split(pattern, "*")
+			if strings.HasPrefix(u.Path, patternParts[0]) && strings.HasSuffix(u.Path, patternParts[1]) {
+				return false
+			}
+		}
+	}
+	return true
 }

@@ -37,3 +37,19 @@ func RemoveDisallowList(db *sql.DB, domain string) {
 		panic(err)
 	}
 }
+
+func GetDisallowList(db *sql.DB, domain string) []string {
+	query := `SELECT disallowed_url FROM disallow_list WHERE domain = ?`
+	rows, err := db.Query(query, domain)
+	defer rows.Close()
+	if err != nil {
+		panic(err)
+	}
+	disallowedUrls := []string{}
+	for rows.Next() {
+		var disallowedUrl string
+		rows.Scan(&disallowedUrl)
+		disallowedUrls = append(disallowedUrls, disallowedUrl)
+	}
+	return disallowedUrls
+}
