@@ -7,6 +7,7 @@ import (
 	"os"
 	"spidy/crawler"
 	"spidy/models"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	_ "github.com/mattn/go-sqlite3"
@@ -38,23 +39,16 @@ func main() {
 		}
 	}
 
-	chosenUrl := models.ChooseNextUrlToCrawl(db)
-	fmt.Println("Chosen URL: " + chosenUrl)
-	hostname := crawler.UrlToHostname(chosenUrl)
-	fmt.Println("Hostname: " + hostname)
+	crawlTicker := time.NewTicker(1 * time.Second)
+	defer crawlTicker.Stop()
 
-	robotsTxtUrl := crawler.RobotsTxtUrl(chosenUrl)
-	fmt.Println("Robots.txt URL: " + robotsTxtUrl)
-	response, err := crawler.Fetch(robotsTxtUrl)
-	if err != nil {
-		log.Fatal(err)
+	for {
+		select {
+		case <-crawlTicker.C:
+			crawler.Crawl(db)
+		}
 	}
-	defer response.Body.Close()
-
-	body, err := crawler.ResponseToString(response)
-	disallowedList := crawler.ParseRobotsTxt(body, "Spidy")
-	fmt.Println(disallowedList)
-
+	chosenUrl := ""
 	htmlResponse, err := crawler.Fetch(chosenUrl)
 	if err != nil {
 		log.Fatal(err)

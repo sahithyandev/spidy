@@ -21,3 +21,27 @@ func SeedDomain(db *sql.DB) {
 		panic(err)
 	}
 }
+
+func CreateDomain(db *sql.DB, domain string) Domain {
+	query := `INSERT INTO domain (domain) VALUES (?) RETURNING domain, added_at`
+	row := db.QueryRow(query, domain)
+
+	var d Domain
+	err := row.Scan(&d.Domain, &d.AddedAt)
+	if err != nil {
+		panic(err)
+	}
+	return d
+}
+
+func GetDomain(db *sql.DB, domain string) (Domain, error) {
+	query := `SELECT domain, added_at FROM domain WHERE domain = ?`
+	row := db.QueryRow(query, domain)
+
+	var d Domain
+	err := row.Scan(&d.Domain, &d.AddedAt)
+	if err != nil {
+		return d, err
+	}
+	return d, nil
+}

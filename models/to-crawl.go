@@ -33,6 +33,14 @@ func SeedToCrawl(db *sql.DB) {
 	}
 }
 
+func RemoveToCrawlEntry(db *sql.DB, crawlUrl string) {
+	query := `DELETE FROM to_crawl WHERE url = ?`
+	_, err := db.Exec(query, crawlUrl)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func ChooseNextUrlToCrawl(db *sql.DB) string {
 	query := `SELECT url FROM to_crawl WHERE crawl_after <= CURRENT_TIMESTAMP ORDER BY priority DESC, crawl_after ASC LIMIT 1`
 	rows, err := db.Query(query)

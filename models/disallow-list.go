@@ -21,3 +21,19 @@ func SeedDisallowList(db *sql.DB) {
 		panic(err)
 	}
 }
+
+func AddDisallowListEntry(db *sql.DB, domain string, disallowedUrl string) {
+	query := `INSERT INTO disallow_list (domain, disallowed_url) VALUES (?, ?)`
+	_, err := db.Exec(query, domain, disallowedUrl)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func RemoveDisallowList(db *sql.DB, domain string) {
+	query := `DELETE FROM disallow_list WHERE domain = ?`
+	_, err := db.Exec(query, domain)
+	if err != nil {
+		panic(err)
+	}
+}
