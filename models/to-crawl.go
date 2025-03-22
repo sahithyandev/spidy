@@ -32,3 +32,17 @@ func SeedToCrawl(db *sql.DB) {
 		panic(err)
 	}
 }
+
+func ChooseNextUrlToCrawl(db *sql.DB) string {
+	query := `SELECT url FROM to_crawl WHERE crawl_after <= CURRENT_TIMESTAMP ORDER BY priority DESC, crawl_after ASC LIMIT 1`
+	rows, err := db.Query(query)
+	defer rows.Close()
+	if err != nil {
+		panic(err)
+	}
+	url := ""
+	if rows.Next() {
+		rows.Scan(&url)
+	}
+	return url
+}

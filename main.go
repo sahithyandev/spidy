@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"spidy/crawler"
 	"spidy/models"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -29,5 +30,17 @@ func main() {
 		models.SeedToCrawl(db)
 		models.SeedPage(db)
 		models.SeedDisallowList(db)
+		err := db.Ping()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+
+	chosenUrl := models.ChooseNextUrlToCrawl(db)
+	fmt.Println("Chosen URL: " + chosenUrl)
+	hostname := crawler.UrlToHostname(chosenUrl)
+	fmt.Println("Hostname: " + hostname)
+
+	robotsTxtUrl := crawler.RobotsTxtUrl(chosenUrl)
+	fmt.Println("Robots.txt URL: " + robotsTxtUrl)
 }
