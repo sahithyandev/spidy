@@ -29,6 +29,7 @@ func main() {
 		models.SeedWordIndex(db)
 		models.SeedToCrawl(db)
 		models.SeedPage(db)
+		models.SeedDomain(db)
 		models.SeedDisallowList(db)
 		err := db.Ping()
 		if err != nil {
