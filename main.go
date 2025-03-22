@@ -43,4 +43,11 @@ func main() {
 
 	robotsTxtUrl := crawler.RobotsTxtUrl(chosenUrl)
 	fmt.Println("Robots.txt URL: " + robotsTxtUrl)
+	body, err := crawler.Fetch(robotsTxtUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	disallowedList := crawler.ParseRobotsTxt(body, "Spidy")
+	fmt.Println(disallowedList)
 }
