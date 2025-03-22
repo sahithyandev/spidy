@@ -28,5 +28,6 @@ func main() {
 		models.SeedWordIndex(db)
 		models.SeedToCrawl(db)
 		models.SeedPage(db)
+		models.SeedDisallowList(db)
 	}
 }
