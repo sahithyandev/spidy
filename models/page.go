@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/google/uuid"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -20,13 +22,20 @@ type Page struct {
 func SeedPage(db *sql.DB) {
 	query := `CREATE TABLE IF NOT EXISTS pages (
 		id TEXT PRIMARY KEY,
-		url TEXT,
+		url TEXT UNIQUE,
 		title TEXT,
-		description TEXT,
-		content TEXT,
-		page_rank FLOAT,
-		crawled_at TIMESTAMP)`
+		description TEXT ,
+		page_rank FLOAT NOT NULL DEFAULT 0.0,
+		crawled_at TIMESTAMP NOT NULL DEFAULT current_timestamp)`
 	_, err := db.Exec(query)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func AddPage(db *sql.DB, url string, title string, description string) {
+	query := `INSERT INTO pages (id, url, title, description) VALUES (?, ?, ?, ?)`
+	_, err := db.Exec(query, uuid.Must(uuid.NewV7()), url, title, description)
 	if err != nil {
 		panic(err)
 	}

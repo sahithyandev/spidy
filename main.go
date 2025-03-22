@@ -9,7 +9,6 @@ import (
 	"spidy/models"
 	"time"
 
-	"github.com/PuerkitoBio/goquery"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -45,21 +44,10 @@ func main() {
 	for {
 		select {
 		case <-crawlTicker.C:
-			crawler.Crawl(db)
+			result := crawler.Crawl(db)
+			if result {
+				os.Exit(0)
+			}
 		}
 	}
-	chosenUrl := ""
-	htmlResponse, err := crawler.Fetch(chosenUrl)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer htmlResponse.Body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(htmlResponse.Body)
-
-	doc.Find("a").Each(func(i int, s *goquery.Selection) {
-		innerText := s.Text()
-		link, _ := s.Attr("href")
-		fmt.Printf("%s --> %s\n", innerText, link)
-	})
 }

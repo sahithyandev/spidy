@@ -33,6 +33,14 @@ func SeedToCrawl(db *sql.DB) {
 	}
 }
 
+func AddToCrawlEntry(db *sql.DB, crawlUrl string, crawlAfter time.Time) {
+	query := `INSERT INTO to_crawl (url, crawl_after) VALUES (?, ?)`
+	_, err := db.Exec(query, crawlUrl, crawlAfter)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func RemoveToCrawlEntry(db *sql.DB, crawlUrl string) {
 	query := `DELETE FROM to_crawl WHERE url = ?`
 	_, err := db.Exec(query, crawlUrl)
