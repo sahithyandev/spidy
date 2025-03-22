@@ -8,6 +8,7 @@ import (
 	"spidy/crawler"
 	"spidy/models"
 
+	"github.com/PuerkitoBio/goquery"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -44,11 +45,27 @@ func main() {
 
 	robotsTxtUrl := crawler.RobotsTxtUrl(chosenUrl)
 	fmt.Println("Robots.txt URL: " + robotsTxtUrl)
-	body, err := crawler.Fetch(robotsTxtUrl)
+	response, err := crawler.Fetch(robotsTxtUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer response.Body.Close()
 
+	body, err := crawler.ResponseToString(response)
 	disallowedList := crawler.ParseRobotsTxt(body, "Spidy")
 	fmt.Println(disallowedList)
+
+	htmlResponse, err := crawler.Fetch(chosenUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer htmlResponse.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(htmlResponse.Body)
+
+	doc.Find("a").Each(func(i int, s *goquery.Selection) {
+		innerText := s.Text()
+		link, _ := s.Attr("href")
+		fmt.Printf("%s --> %s\n", innerText, link)
+	})
 }
