@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/url"
 	"spidy/models"
+	"spidy/utils"
 	"strings"
 	"time"
 
@@ -16,10 +17,9 @@ import (
 func Crawl(db *sql.DB) bool {
 	urlToCrawl := models.ChooseNextUrlToCrawl(db)
 	if urlToCrawl == "" {
-		fmt.Println("No URLs to crawl")
 		return true
 	}
-	fmt.Printf("Crawling: %s\n", urlToCrawl)
+	utils.Logger.Infof("Start crawling %s\n", urlToCrawl)
 
 	hostname := UrlToHostname(urlToCrawl)
 
@@ -34,7 +34,7 @@ func Crawl(db *sql.DB) bool {
 
 	var disallowedUrls []string
 	if err != nil || time.Since(domain.AddedAt) > 7*24*time.Hour {
-		fmt.Printf("Updating robots.txt for %s\n", hostname)
+		utils.Logger.Infof("Updating robots.txt for %s", hostname)
 		disallowedUrls = FetchAndParseRobotsTxt(fmt.Sprintf("https://%s", hostname))
 		models.RemoveDisallowList(db, hostname)
 		for _, disallowedUrl := range disallowedUrls {
@@ -64,9 +64,12 @@ func Crawl(db *sql.DB) bool {
 		models.AddPage(db, urlToCrawl, title, description)
 	}
 
-	// remove all existing anchors
+	utils.Logger.Infoln("Removing all anchor links from page")
 	models.RemoveAllAnchorLinksFromPage(db, urlToCrawl)
-	db.Ping()
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		innerText := strings.Trim(strings.ReplaceAll(s.Text(), "\n", ""), " ")
@@ -88,10 +91,15 @@ func Crawl(db *sql.DB) bool {
 			}
 			link = parsedCurrentUrl.JoinPath(link).String()
 		}
+
+		utils.Logger.Infof("Adding link: %s --> %s", innerText, link)
 		models.AddAnchorLink(db, innerText, urlToCrawl, link)
+
 		if models.IsUrlInToCrawl(db, link) {
+			utils.Logger.Infof("Increasing crawl priority: %s", link)
 			models.IncreasePriority(db, link)
 		} else {
+			utils.Logger.Infof("Adding to crawl list: %s", link)
 			models.AddToCrawlEntry(db, link, time.Now())
 		}
 	})
@@ -102,6 +110,6 @@ func Crawl(db *sql.DB) bool {
 		log.Fatal(err)
 	}
 	models.AddToCrawlEntry(db, urlToCrawl, time.Now().Add(7*24*time.Hour))
-	fmt.Printf("Crawled: %s\n", urlToCrawl)
+	utils.Logger.Infof("Finished crawling %s", urlToCrawl)
 	return false
 }
