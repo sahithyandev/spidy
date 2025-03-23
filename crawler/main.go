@@ -19,7 +19,7 @@ func Crawl(db *sql.DB) bool {
 	if urlToCrawl == "" {
 		return true
 	}
-	utils.Logger.Infof("Start crawling %s\n", urlToCrawl)
+	utils.Logger.Infof("Start crawling %s", urlToCrawl)
 
 	hostname := UrlToHostname(urlToCrawl)
 
@@ -41,10 +41,14 @@ func Crawl(db *sql.DB) bool {
 			models.AddDisallowListEntry(db, hostname, disallowedUrl)
 		}
 	} else {
+		utils.Logger.Infof("Getting disallow list for %s", domain.Domain)
 		disallowedUrls = models.GetDisallowList(db, hostname)
 	}
 
 	if !IsUrlAllowed(urlToCrawl, disallowedUrls) {
+		utils.Logger.Infof("Skipping (disallowed): %s", urlToCrawl)
+		models.RemoveToCrawlEntry(db, urlToCrawl)
+		db.Ping()
 		return false
 	}
 
@@ -56,7 +60,9 @@ func Crawl(db *sql.DB) bool {
 
 	doc, err := goquery.NewDocumentFromReader(htmlResponse.Body)
 	title := doc.Find("head>title").First().Text()
+	utils.Logger.Infof("Title: %s", title)
 	description := doc.Find("head>meta[name=description]").First().AttrOr("content", "")
+	utils.Logger.Infof("Description: %s", title)
 
 	if models.IfPageExists(db, urlToCrawl) {
 		models.UpdatePage(db, urlToCrawl, title, description)
