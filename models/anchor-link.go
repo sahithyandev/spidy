@@ -29,3 +29,13 @@ func SeedAnchorLink(db *sql.DB) {
 		panic(err)
 	}
 }
+
+func AddAnchorLink(db *sql.DB, text string, fromPageUrl string, toPageUrl string) {
+	fromPageId := HashUrl(fromPageUrl)
+	toPageId := HashUrl(toPageUrl)
+	query := `INSERT INTO anchor_links (id, text, from_page_id, to_page_id, is_internal) VALUES (?,?,?,?,?)`
+	_, err := db.Exec(query, HashAnchorLink(text, fromPageId, toPageId), text, fromPageId, toPageId, AreInternalHrefs(fromPageUrl, toPageUrl))
+	if err != nil {
+		panic(err)
+	}
+}

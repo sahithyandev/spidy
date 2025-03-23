@@ -80,6 +80,9 @@ func Crawl(db *sql.DB) bool {
 			link = parsedCurrentUrl.JoinPath(link).String()
 		}
 		fmt.Printf("'%s' --> %s\n", innerText, link)
+
+		models.AddAnchorLink(db, innerText, urlToCrawl, link)
+		models.AddToCrawlEntry(db, link, time.Now())
 	})
 
 	models.RemoveToCrawlEntry(db, urlToCrawl)
