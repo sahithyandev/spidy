@@ -91,6 +91,10 @@ func Crawl(db *sql.DB) bool {
 			}
 			link = parsedCurrentUrl.JoinPath(link).String()
 		}
+		if !strings.HasPrefix(link, "https://") {
+			utils.Logger.Infof("Ignoring link (invalid schema): %s", link)
+			return
+		}
 
 		utils.Logger.Infof("Adding link: %s --> %s", innerText, link)
 		models.AddAnchorLink(db, innerText, urlToCrawl, link)
