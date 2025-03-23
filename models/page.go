@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
-
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -35,7 +33,7 @@ func SeedPage(db *sql.DB) {
 
 func AddPage(db *sql.DB, url string, title string, description string) {
 	query := `INSERT INTO pages (id, url, title, description) VALUES (?, ?, ?, ?)`
-	_, err := db.Exec(query, uuid.Must(uuid.NewV7()), url, title, description)
+	_, err := db.Exec(query, HashUrl(url), url, title, description)
 	if err != nil {
 		panic(err)
 	}
