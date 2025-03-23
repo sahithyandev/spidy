@@ -39,3 +39,12 @@ func AddAnchorLink(db *sql.DB, text string, fromPageUrl string, toPageUrl string
 		panic(err)
 	}
 }
+
+func RemoveAllAnchorLinksFromPage(db *sql.DB, pageUrl string) {
+	pageId := HashUrl(pageUrl)
+	query := `DELETE FROM anchor_links WHERE from_page_id = ?`
+	_, err := db.Exec(query, pageId)
+	if err != nil {
+		panic(err)
+	}
+}

@@ -62,3 +62,21 @@ func ChooseNextUrlToCrawl(db *sql.DB) string {
 	}
 	return url
 }
+func IsUrlInToCrawl(db *sql.DB, url string) bool {
+	query := `SELECT EXISTS(SELECT 1 FROM to_crawl WHERE url = ?)`
+	row := db.QueryRow(query, url)
+	var exists bool
+	err := row.Scan(&exists)
+	if err != nil {
+		panic(err)
+	}
+	return exists
+}
+
+func IncreasePriority(db *sql.DB, url string) {
+	query := `UPDATE to_crawl SET priority = priority + 1 WHERE url = ?`
+	_, err := db.Query(query, url)
+	if err != nil {
+		panic(err)
+	}
+}

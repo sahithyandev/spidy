@@ -38,3 +38,22 @@ func AddPage(db *sql.DB, url string, title string, description string) {
 		panic(err)
 	}
 }
+
+func IfPageExists(db *sql.DB, url string) bool {
+	query := `SELECT EXISTS(SELECT 1 FROM pages WHERE url = ?)`
+	row := db.QueryRow(query, url)
+	var exists bool
+	err := row.Scan(&exists)
+	if err != nil {
+		panic(err)
+	}
+	return exists
+}
+
+func UpdatePage(db *sql.DB, url string, title string, description string) {
+	query := `UPDATE pages SET title = ?, description = ? WHERE url = ?`
+	_, err := db.Exec(query, title, description, url)
+	if err != nil {
+		panic(err)
+	}
+}

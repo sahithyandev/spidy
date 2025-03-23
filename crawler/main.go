@@ -3,6 +3,7 @@ package crawler
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/url"
 	"spidy/models"
 	"strings"
@@ -57,7 +58,15 @@ func Crawl(db *sql.DB) bool {
 	title := doc.Find("head>title").First().Text()
 	description := doc.Find("head>meta[name=description]").First().AttrOr("content", "")
 
-	models.AddPage(db, urlToCrawl, title, description)
+	if models.IfPageExists(db, urlToCrawl) {
+		models.UpdatePage(db, urlToCrawl, title, description)
+	} else {
+		models.AddPage(db, urlToCrawl, title, description)
+	}
+
+	// remove all existing anchors
+	models.RemoveAllAnchorLinksFromPage(db, urlToCrawl)
+	db.Ping()
 
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		innerText := strings.Trim(strings.ReplaceAll(s.Text(), "\n", ""), " ")
@@ -79,13 +88,19 @@ func Crawl(db *sql.DB) bool {
 			}
 			link = parsedCurrentUrl.JoinPath(link).String()
 		}
-		fmt.Printf("'%s' --> %s\n", innerText, link)
-
 		models.AddAnchorLink(db, innerText, urlToCrawl, link)
-		models.AddToCrawlEntry(db, link, time.Now())
+		if models.IsUrlInToCrawl(db, link) {
+			models.IncreasePriority(db, link)
+		} else {
+			models.AddToCrawlEntry(db, link, time.Now())
+		}
 	})
 
 	models.RemoveToCrawlEntry(db, urlToCrawl)
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
 	models.AddToCrawlEntry(db, urlToCrawl, time.Now().Add(7*24*time.Hour))
 	fmt.Printf("Crawled: %s\n", urlToCrawl)
 	return false
