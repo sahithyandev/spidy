@@ -36,6 +36,10 @@ func AddAnchorLink(db *sql.DB, text string, fromPageUrl string, toPageUrl string
 	query := `INSERT INTO anchor_links (id, text, from_page_id, to_page_id, is_internal) VALUES (?,?,?,?,?)`
 	_, err := db.Exec(query, HashAnchorLink(text, fromPageId, toPageId), text, fromPageId, toPageId, AreInternalHrefs(fromPageUrl, toPageUrl))
 	if err != nil {
+		if err.Error() == "UNIQUE constraint failed: anchor_links.id" {
+			// ignore as it's a duplicate
+			return
+		}
 		panic(err)
 	}
 }
