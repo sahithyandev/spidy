@@ -8,17 +8,15 @@ import (
 )
 
 type ToCrawl struct {
-	Url        string    `json:"url"`
-	Priority   int       `json:"priority"`
-	CrawlAfter time.Time `json:"crawl_after"`
-	AddedOn    time.Time `json:"added_on"`
+	Url      string    `json:"url"`
+	Priority int       `json:"priority"`
+	AddedOn  time.Time `json:"added_on"`
 }
 
 func SeedToCrawl(db *sql.DB) {
 	query := `CREATE TABLE IF NOT EXISTS to_crawl (
 		url TEXT PRIMARY KEY,
 		priority INTEGER NOT NULL DEFAULT 1,
-		crawl_after TIMESTAMP NOT NULL DEFAULT current_timestamp,
 		added_on TIMESTAMP NOT NULL DEFAULT current_timestamp)`
 	_, err := db.Exec(query)
 	if err != nil {
@@ -33,9 +31,9 @@ func SeedToCrawl(db *sql.DB) {
 	}
 }
 
-func AddToCrawlEntry(db *sql.DB, crawlUrl string, crawlAfter time.Time) {
-	query := `INSERT INTO to_crawl (url, crawl_after) VALUES (?, ?)`
-	_, err := db.Exec(query, crawlUrl, crawlAfter)
+func AddToCrawlEntry(db *sql.DB, crawlUrl string) {
+	query := `INSERT INTO to_crawl (url) VALUES (?)`
+	_, err := db.Exec(query, crawlUrl)
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +48,10 @@ func RemoveToCrawlEntry(db *sql.DB, crawlUrl string) {
 }
 
 func ChooseNextUrlToCrawl(db *sql.DB) string {
-	query := `SELECT url FROM to_crawl WHERE crawl_after <= datetime('now', 'localtime') ORDER BY priority DESC, crawl_after ASC LIMIT 1`
+	query := `SELECT COALESCE(
+		(SELECT url FROM to_crawl ORDER BY priority DESC LIMIT 1),
+		(SELECT url FROM pages ORDER BY crawled_at ASC LIMIT 1)
+	)`
 	rows, err := db.Query(query)
 	defer rows.Close()
 	if err != nil {

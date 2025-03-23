@@ -110,7 +110,7 @@ func Crawl(db *sql.DB) bool {
 			models.IncreasePriority(db, link)
 		} else {
 			utils.Logger.Infof("Adding to crawl list: %s", link)
-			models.AddToCrawlEntry(db, link, time.Now())
+			models.AddToCrawlEntry(db, link)
 		}
 	})
 
@@ -119,7 +119,6 @@ func Crawl(db *sql.DB) bool {
 	if err != nil {
 		log.Fatal(err)
 	}
-	models.AddToCrawlEntry(db, urlToCrawl, time.Now().Add(7*24*time.Hour))
 	utils.Logger.Infof("Finished crawling %s", urlToCrawl)
 	return false
 }
